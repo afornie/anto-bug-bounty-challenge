@@ -1,4 +1,12 @@
-import { Grow, Box, Theme, Toolbar, Typography } from "@mui/material";
+import {
+  Grow,
+  Box,
+  Theme,
+  Toolbar,
+  Typography,
+  MenuItem,
+  Select
+} from "@mui/material";
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
 import { styled, useTheme } from "@mui/material/styles";
 import React, { useEffect, useState } from "react";
@@ -31,7 +39,7 @@ const AppBar = styled(MuiAppBar)<AppBarProps>(({ theme }) => ({
 
 const AppHeader = React.forwardRef((props: AppHeaderProps, ref) => {
   const { user, pageTitle } = props;
-  const { t } = useTranslation("app");
+  const { t, i18n } = useTranslation("app");
   const theme = useTheme();
 
   const [count, setCount] = useState(0);
@@ -39,13 +47,16 @@ const AppHeader = React.forwardRef((props: AppHeaderProps, ref) => {
   const minutes = hours * 60;
   const seconds = minutes * 60;
   const countdown = seconds - count;
-  const countdownMinutes = `${~~(countdown / 60)}`.padStart(2, "0");
-  const countdownSeconds = (countdown % 60).toFixed(0).padStart(2, "0");
+  const safeCountdown = Math.max(countdown, 0);
+  const countdownMinutes = `${~~(safeCountdown / 60)}`.padStart(2, "0");
+  const countdownSeconds = (safeCountdown % 60).toFixed(0).padStart(2, "0");
 
   useEffect(() => {
-    setInterval(() => {
+    const intervalId = window.setInterval(() => {
       setCount((c) => c + 1);
     }, 1000);
+
+    return () => window.clearInterval(intervalId);
   }, []);
 
   return (
@@ -80,6 +91,26 @@ const AppHeader = React.forwardRef((props: AppHeaderProps, ref) => {
             </Typography>
           </Box>
           <Box sx={{ flex: 1, justifyContent: "flex-end", display: "flex" }}>
+            <Select
+              size="small"
+              value={i18n.resolvedLanguage || i18n.language}
+              onChange={(event) =>
+                i18n.changeLanguage(String(event.target.value))
+              }
+              sx={{
+                color: theme.palette.common.white,
+                mr: 2,
+                ".MuiOutlinedInput-notchedOutline": {
+                  borderColor: theme.palette.grey[700]
+                },
+                ".MuiSvgIcon-root": {
+                  color: theme.palette.common.white
+                }
+              }}
+            >
+              <MenuItem value="en">EN</MenuItem>
+              <MenuItem value="de">DE</MenuItem>
+            </Select>
             {user && user.eMail && (
               <Grow in={Boolean(user && user.eMail)}>
                 <AvatarMenu user={user} />
